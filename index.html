@@ -136,6 +136,7 @@
         document.getElementById("leaderboardModal"),
       );
       let boardLocked = false;
+      const BASE_URL = "https://your-app-name.up.railway.app";
 
       let sequence = [];
       let playerSequence = [];
@@ -254,7 +255,7 @@
       }
 
       async function saveResult(name, level) {
-        await fetch("http://localhost:3000/save-score", {
+        await fetch(`${BASE_URL}/save-score`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -267,7 +268,7 @@
       }
 
       async function showResults() {
-        const response = await fetch("http://localhost:3000/leaderboard");
+        const response = await fetch(`${BASE_URL}/leaderboard`);
         const results = await response.json();
 
         const list = document.getElementById("leaderboardList");
