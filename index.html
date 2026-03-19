@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Simon Memory Game</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+    />
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+    <style>
+      .level {
+        margin-bottom: 20px;
+        font-size: 24px;
+        font-weight: bold;
+      }
+      body {
+        margin: 0;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        background: rgb(177, 202, 37);
+        font-family: Arial, sans-serif;
+      }
+      .grid-container {
+        display: grid;
+        grid-template-columns: repeat(3, 150px);
+        grid-template-rows: repeat(3, 150px);
+        gap: 10px;
+      }
+
+      .grid-item {
+        background-color: #4caf50;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+      }
+      button {
+        margin-bottom: 20px;
+        padding: 10px 20px;
+        font-size: 16px;
+        cursor: pointer;
+        display: inline-flex;
+        padding: 10px;
+      }
+      .active {
+        background-color: yellow;
+      }
+      .wrong {
+        background-color: red !important;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="level">Level: 1</div>
+    <button id="startBtn">Start Game!</button>
+    <button id="leadBtn">Leaderboard</button>
+    <div class="d-flex gap-2 mb-3">
+      <select id="difficultySelect" class="form-select w-auto">
+        <option value="easy">Easy</option>
+        <option value="medium">Medium</option>
+        <option value="hard">Hard</option>
+      </select>
+      <span id="livesDisplay">Lives: </span>
+    </div>
+    <div class="grid-container">
+      <div class="grid-item"></div>
+      <div class="grid-item"></div>
+      <div class="grid-item"></div>
+      <div class="grid-item"></div>
+      <div class="grid-item"></div>
+      <div class="grid-item"></div>
+      <div class="grid-item"></div>
+      <div class="grid-item"></div>
+      <div class="grid-item"></div>
+    </div>
+    <div class="modal fade" id="gameOverModal" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Game Over</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+            ></button>
+          </div>
+
+          <div class="modal-body">
+            <p id="finalScore"></p>
+            <input
+              type="text"
+              id="playerName"
+              class="form-control"
+              placeholder="Enter your name"
+            />
+          </div>
+
+          <div class="modal-footer">
+            <button class="btn btn-primary" id="saveScoreBtn">
+              Save Score
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="leaderboardModal" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Leaderboard</h5>
+            <button class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+
+          <div class="modal-body">
+            <ul id="leaderboardList" class="list-group"></ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const squares = document.querySelectorAll(".grid-item");
+      const levelDisplay = document.querySelector(".level");
+      const startBtn = document.getElementById("startBtn");
+      const leadBtn = document.getElementById("leadBtn");
+      const gameOverModal = new bootstrap.Modal(
+        document.getElementById("gameOverModal"),
+      );
+      const leaderboardModal = new bootstrap.Modal(
+        document.getElementById("leaderboardModal"),
+      );
+      let boardLocked = false;
+
+      let sequence = [];
+      let playerSequence = [];
+      let level = 1;
+      let canClick = false;
+      let lives = 3;
+      var correct = new Audio("sound_effects/correct.mp3");
+      var incorrect = new Audio("sound_effects/incorrect.mp3");
+
+      const difficultySettings = {
+        easy: { speed: 800, lives: 5 },
+        medium: { speed: 600, lives: 3 },
+        hard: { speed: 400, lives: 1 },
+      };
+
+      function updateLivesDisplay() {
+        document.getElementById("livesDisplay").textContent = `Lives: ${lives}`;
+      }
+
+      function getRandomSquare() {
+        return Math.floor(Math.random() * squares.length);
+      }
+
+      function flashSquare(index) {
+        squares[index].classList.add("active");
+        setTimeout(() => {
+          squares[index].classList.remove("active");
+        }, 300);
+      }
+
+      function playSequence() {
+        canClick = false;
+        let i = 0;
+
+        const difficulty = document.getElementById("difficultySelect").value;
+        const speed = difficultySettings[difficulty].speed;
+
+        const interval = setInterval(() => {
+          flashSquare(sequence[i]);
+          i++;
+          if (i >= sequence.length) {
+            clearInterval(interval);
+            setTimeout(() => {
+              canClick = true;
+            }, speed);
+          }
+        }, speed);
+      }
+
+      function nextLevel() {
+        playerSequence = [];
+        sequence.push(getRandomSquare());
+        levelDisplay.textContent = "Level: " + level;
+        playSequence();
+      }
+
+      function startGame() {
+        startBtn.disabled = true;
+        sequence = [];
+        playerSequence = [];
+        level = 1;
+
+        const difficulty = document.getElementById("difficultySelect").value;
+        lives = difficultySettings[difficulty].lives;
+        updateLivesDisplay();
+
+        nextLevel();
+      }
+
+      function flashWrong() {
+        document.body.classList.add("wrong");
+
+        setTimeout(() => {
+          document.body.classList.remove("wrong");
+        }, 300);
+      }
+
+      function checkAnswer(index) {
+        if (!canClick) return;
+
+        playerSequence.push(index);
+
+        if (
+          playerSequence[playerSequence.length - 1] !==
+          sequence[playerSequence.length - 1]
+        ) {
+          lives--;
+          flashWrong();
+          incorrect.play();
+          updateLivesDisplay();
+
+          if (lives <= 0) {
+            const score = level - 1;
+            document.getElementById("finalScore").textContent =
+              "You reached Level " + score;
+            window.finalScore = score;
+            document.getElementById("playerName").value = "";
+            gameOverModal.show();
+            startBtn.disabled = false;
+            level = 1;
+            levelDisplay.textContent = "Level: 1";
+            sequence = [];
+            playerSequence = [];
+          }
+          return;
+        }
+        correct.currentTime = 0;
+        correct.play();
+
+        if (playerSequence.length === sequence.length) {
+          level++;
+          setTimeout(() => {
+            nextLevel();
+          }, 500);
+        }
+      }
+
+      async function saveResult(name, level) {
+        await fetch("http://localhost:3000/save-score", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name: name,
+            level: level,
+          }),
+        });
+      }
+
+      async function showResults() {
+        const response = await fetch("http://localhost:3000/leaderboard");
+        const results = await response.json();
+
+        const list = document.getElementById("leaderboardList");
+        list.innerHTML = "";
+
+        if (results.length === 0) {
+          list.innerHTML = "<li class='list-group-item'>No scores yet</li>";
+        } else {
+          results.forEach((result, index) => {
+            const li = document.createElement("li");
+            li.className = "list-group-item";
+            li.textContent = `${index + 1}. ${result.name} - Level ${result.level}`;
+            list.appendChild(li);
+          });
+        }
+
+        leaderboardModal.show();
+      }
+
+      squares.forEach((square, index) => {
+        square.addEventListener("click", () => {
+          if (!canClick) return;
+
+          flashSquare(index);
+          checkAnswer(index);
+        });
+      });
+
+      startBtn.addEventListener("click", startGame);
+      leadBtn.addEventListener("click", showResults);
+      document.getElementById("saveScoreBtn").addEventListener("click", () => {
+        const name = document.getElementById("playerName").value.trim();
+
+        if (name) {
+          saveResult(name, window.finalScore);
+        }
+
+        document.getElementById("playerName").value = "";
+        gameOverModal.hide();
+
+        showResults();
+      });
+    </script>
+  </body>
+</html>
