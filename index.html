@@ -136,7 +136,7 @@
         document.getElementById("leaderboardModal"),
       );
       let boardLocked = false;
-      const BASE_URL = "https://your-app-name.up.railway.app";
+      const BASE_URL = "https://postgres-production-0753.up.railway.app";
 
       let sequence = [];
       let playerSequence = [];
@@ -255,16 +255,20 @@
       }
 
       async function saveResult(name, level) {
-        await fetch(`${BASE_URL}/save-score`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            name: name,
-            level: level,
-          }),
-        });
+        try {
+          const res = await fetch(`${BASE_URL}/save-score`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ name, level }),
+          });
+
+          if (!res.ok) throw new Error("Failed to save");
+        } catch (err) {
+          alert("Error saving score");
+          console.error(err);
+        }
       }
 
       async function showResults() {

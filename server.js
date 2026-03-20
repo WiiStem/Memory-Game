@@ -13,16 +13,27 @@ const pool = new Pool({
   },
 });
 
-pool.query(`
-  CREATE TABLE IF NOT EXISTS scores (
-    id SERIAL PRIMARY KEY,
-    name TEXT,
-    level INTEGER
-  )
-`);
+(async () => {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS scores (
+        id SERIAL PRIMARY KEY,
+        name TEXT,
+        level INTEGER
+      )
+    `);
+    console.log("✅ Table ready");
+  } catch (err) {
+    console.error("❌ Table creation failed:", err);
+  }
+})();
 
 app.post("/save-score", async (req, res) => {
   const { name, level } = req.body;
+
+  if (!name || typeof level !== "number") {
+    return res.status(400).send({ error: "Invalid input" });
+  }
 
   try {
     await pool.query("INSERT INTO scores (name, level) VALUES ($1, $2)", [
@@ -32,6 +43,7 @@ app.post("/save-score", async (req, res) => {
     res.send({ success: true });
   } catch (err) {
     res.status(500).send(err);
+    res.status(500).send("Server error");
   }
 });
 
