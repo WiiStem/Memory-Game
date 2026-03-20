@@ -31,18 +31,21 @@ const pool = new Pool({
 app.post("/save-score", async (req, res) => {
   const { name, level } = req.body;
 
-  if (!name || typeof level !== "number") {
+  const parsedLevel = Number(level);
+
+  if (!name || isNaN(parsedLevel)) {
     return res.status(400).send({ error: "Invalid input" });
   }
 
   try {
     await pool.query("INSERT INTO scores (name, level) VALUES ($1, $2)", [
       name,
-      level,
+      parsedLevel,
     ]);
+
     res.send({ success: true });
   } catch (err) {
-    res.status(500).send(err);
+    console.error(err);
     res.status(500).send("Server error");
   }
 });

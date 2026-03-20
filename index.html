@@ -136,7 +136,7 @@
         document.getElementById("leaderboardModal"),
       );
       let boardLocked = false;
-      const BASE_URL = "https://postgres-production-0753.up.railway.app";
+      const BASE_URL = "https://artistic-gentleness-production.up.railway.app/";
 
       let sequence = [];
       let playerSequence = [];
@@ -307,7 +307,7 @@
         const name = document.getElementById("playerName").value.trim();
 
         if (name) {
-          saveResult(name, window.finalScore);
+          saveResult(name, Number(window.finalScore));
         }
 
         document.getElementById("playerName").value = "";
