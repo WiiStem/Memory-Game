@@ -7,6 +7,12 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+app.get("/", (req, res) => {
+  res.send("SERVER IS WORKING WITH ROUTES");
+});
+
+console.log("🔥 NEW VERSION DEPLOYED");
+
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: {
