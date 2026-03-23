@@ -264,10 +264,14 @@
             body: JSON.stringify({ name, level }),
           });
 
-          if (!res.ok) throw new Error("Failed to save");
+          const text = await res.text();
+          console.log("STATUS:", res.status);
+          console.log("RESPONSE:", text);
+
+          if (!res.ok) throw new Error(text);
         } catch (err) {
-          alert("Error saving score");
-          console.error(err);
+          console.error("SAVE ERROR:", err);
+          alert("Error saving score: " + err.message);
         }
       }
 
